@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Пропал человек — генератор ориентировки</title>
+<style>
+  :root{
+    --red:#c4172b;
+    --red-dark:#9e1122;
+    --ink:#1a1a1a;
+    --muted:#5b5b5b;
+    --paper:#ffffff;
+    --line:#d8d3c7;
+    --bg:#efeae0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.5;
+  }
+  a{color:inherit;text-decoration:none;}
+
+  /* ===== NAV ===== */
+  header.nav{
+    position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;
+    box-shadow:0 2px 12px rgba(0,0,0,.25);
+  }
+  .nav-inner{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:24px;padding:14px 20px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:.5px;}
+  .brand .dot{width:16px;height:16px;background:var(--red);border-radius:50%;flex:none;}
+  .nav-links{display:flex;gap:6px;margin-left:auto;}
+  .nav-links button{
+    font:inherit;cursor:pointer;background:transparent;color:#e9e9e9;border:none;
+    padding:8px 14px;border-radius:8px;font-size:15px;font-weight:600;transition:background .15s,color .15s;
+  }
+  .nav-links button:hover{background:rgba(255,255,255,.12);color:#fff;}
+  .nav-links button.active{background:var(--red);color:#fff;}
+
+  /* ===== PAGES ===== */
+  .page{display:none;max-width:1080px;margin:0 auto;padding:36px 20px 70px;animation:fade .25s ease;}
+  .page.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* ===== HERO (home) ===== */
+  .hero{
+    background:linear-gradient(135deg,var(--red) 0%,var(--red-dark) 100%);
+    color:#fff;border-radius:18px;padding:56px 36px;text-align:center;position:relative;overflow:hidden;
+  }
+  .hero h1{font-size:44px;letter-spacing:3px;line-height:1.1;text-transform:uppercase;margin-bottom:14px;}
+  .hero p{font-size:18px;max-width:640px;margin:0 auto 28px;opacity:.95;}
+  .hero .big-btn{
+    display:inline-block;background:#fff;color:var(--red);font-weight:800;font-size:17px;
+    padding:15px 32px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.25);transition:transform .15s,box-shadow .15s;
+  }
+  .hero .big-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.3);}
+
+  .section-title{font-size:26px;font-weight:800;margin:48px 0 6px;}
+  .section-sub{color:var(--muted);margin-bottom:26px;}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px;}
+  .card .ico{width:46px;height:46px;border-radius:10px;background:#fbe6e7;color:var(--red);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px;font-weight:800;}
+  .card h3{font-size:17px;margin-bottom:6px;}
+  .card p{color:var(--muted);font-size:14.5px;}
+
+  /* ===== GENERATOR TOOLBAR ===== */
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:0 auto 18px;}
+  .toolbar button,.toolbar label{
+    font:inherit;cursor:pointer;border:none;border-radius:8px;padding:10px 16px;
+    font-weight:600;font-size:14px;color:#fff;background:var(--red);transition:background .15s;
+  }
+  .toolbar button:hover,.toolbar label:hover{background:var(--red-dark);}
+  .toolbar .ghost{background:#fff;color:var(--red);border:1.5px solid var(--red);}
+  .toolbar .ghost:hover{background:#fdecec;}
+  .toolbar input[type=file]{display:none;}
+
+  .sheet{background:var(--paper);border-radius:14px;box-shadow:0 6px 30px rgba(0,0,0,.15);overflow:hidden;}
+  .banner{background:var(--red);color:#fff;text-align:center;padding:22px 16px;}
+  .banner h1{font-size:34px;letter-spacing:2px;line-height:1;text-transform:uppercase;}
+  .banner h1 span{display:block;font-size:20px;letter-spacing:1px;margin-top:6px;font-weight:600;text-transform:none;}
+  .banner .urgent{margin-top:10px;font-weight:700;font-size:15px;background:rgba(255,255,255,.16);display:inline-block;padding:5px 14px;border-radius:20px;}
+  .lead{text-align:center;padding:26px 20px 14px;font-size:22px;font-weight:700;}
+  .lead .who{font-size:27px;color:var(--red);}
+  .main{display:grid;grid-template-columns:300px 1fr;gap:26px;padding:10px 26px 26px;}
+  .photo{
+    border:2px dashed #c9c2b2;border-radius:12px;min-height:340px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    background:#f7f4ec;position:relative;
+  }
+  .photo img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;}
+  .photo .ph-label{color:var(--muted);text-align:center;font-size:15px;padding:20px;}
+  .photo input{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;}
+  .col{display:flex;flex-direction:column;gap:18px;}
+  .block{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fdfcf9;}
+  .block h3{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:var(--red);border-bottom:2px solid var(--red);padding-bottom:6px;margin-bottom:10px;}
+  .row{margin-bottom:8px;}
+  .row:last-child{margin-bottom:0;}
+  .row label{display:block;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;}
+  .editable{font-size:15px;line-height:1.5;border-radius:4px;}
+  .editable[contenteditable="true"]:hover{background:#f1ece0;outline:none;}
+  .editable[contenteditable="true"]:focus{outline:2px solid var(--red);outline-offset:2px;background:#fff;}
+  .phone{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--red);color:var(--red);border-radius:10px;padding:12px 16px;font-weight:800;font-size:19px;letter-spacing:1px;margin-bottom:8px;}
+  .phone small{font-weight:600;font-size:12px;display:block;color:var(--muted);letter-spacing:0;text-transform:uppercase;}
+  .leadPhoto{max-width:160px;max-height:200px;border-radius:10px;border:2px solid var(--line);margin:0 auto;display:block;}
+  .leadPhoto:not([src=""]){margin:10px auto 0;}
+
+  /* ===== GUIDE ===== */
+  .guide-step{display:flex;gap:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:16px;}
+  .guide-step .num{flex:none;width:44px;height:44px;border-radius:50%;background:var(--red);color:#fff;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;}
+  .guide-step h3{font-size:18px;margin-bottom:6px;}
+  .guide-step p{color:var(--muted);font-size:15px;}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .split .block h4{margin-bottom:8px;font-size:15px;}
+  .split ul{margin-left:18px;color:var(--muted);font-size:14.5px;}
+  .split li{margin-bottom:5px;}
+
+  footer.foot{background:var(--ink);color:#cfcfcf;text-align:center;padding:26px 20px;font-size:14px;}
+  footer.foot b{color:#fff;}
+  .hotline{font-size:22px;font-weight:800;color:var(--red);letter-spacing:1px;}
+
+  @media (max-width:760px){
+    .main{grid-template-columns:1fr;padding:10px 16px 20px;}
+    .photo{min-height:280px;}
+    .banner h1{font-size:27px;}
+    .hero h1{font-size:32px;}
+    .hero{padding:40px 20px;}
+    .nav-inner{flex-wrap:wrap;gap:10px;}
+    .nav-links{margin-left:0;width:100%;flex-wrap:wrap;}
+    .split{grid-template-columns:1fr;}
+  }
+  @media print{
+    header.nav,.toolbar,footer.foot{display:none!important;}
+    body{background:#fff;}
+    .page{display:none;}
+    .page.active{display:block;padding:0;}
+    .sheet{box-shadow:none;border-radius:0;}
+    .banner{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .editable[contenteditable="true"]:hover,.editable[contenteditable="true"]:focus{background:transparent;outline:none;}
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand"><span class="dot"></span><span>Поиск людей</span></div>
+    <nav class="nav-links">
+      <button type="button" class="nav-btn active" data-page="home">Главная</button>
+      <button type="button" class="nav-btn" data-page="generator">Ориентировка</button>
+      <button type="button" class="nav-btn" data-page="guide">Как заполнить</button>
+      <button type="button" class="nav-btn" data-page="contacts">Контакты</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HOME ============ -->
+<section class="page active" id="page-home">
+  <div class="hero">
+    <h1>ПРОПАЛ ЧЕЛОВЕК</h1>
+    <p>Каждая минута важна. Создайте ориентировку за пару минут — заполните данные, добавьте фото и распечатайте листовку для распространения.</p>
+    <a class="big-btn" href="#" data-goto="generator">Создать ориентировку</a>
+  </div>
+
+  <h2 class="section-title">Что вы можете сделать</h2>
+  <p class="section-sub">Простой инструмент для составления готовой листовки в стандартном формате.</p>
+  <div class="cards">
+    <div class="card">
+      <div class="ico">1</div>
+      <h3>Заполните данные</h3>
+      <p>Имя, возраст, город, приметы, одежда, обстоятельства — впишите всё, что известно.</p>
+    </div>
+    <div class="card">
+      <div class="ico">2</div>
+      <h3>Добавьте фото</h3>
+      <p>Загрузите актуальный снимок человека — так ориентировку легче узнать.</p>
+    </div>
+    <div class="card">
+      <div class="ico">3</div>
+      <h3>Распечатайте и распространите</h3>
+      <p>Сохраните в PDF и распечатайте листовки для расклейки и в соцсети.</p>
+    </div>
+  </div>
+
+  <h2 class="section-title">Если вы не знаете, с чего начать</h2>
+  <p class="section-sub">Подробные шаги — на отдельной странице.</p>
+  <div class="cards">
+    <div class="card">
+      <h3>Сначала сообщите в полицию</h3>
+      <p>Заявление о пропаже принимается сразу, ждать не нужно. Не теряйте время.</p>
+    </div>
+    <div class="card">
+      <h3>Звоните на горячую линию</h3>
+      <p>Бесплатная круглосуточная горячая линия поможет и подскажет дальнейшие шаги.</p>
+    </div>
+    <div class="card">
+      <h3>Соберите фото и данные</h3>
+      <p>Свежие фотографии, описание одежды, последнее место нахождения и контакты — всё это понадобится для ориентировки.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GENERATOR ============ -->
+<section class="page" id="page-generator">
+  <h2 class="section-title" style="margin-top:0;">Редактор ориентировки</h2>
+  <p class="section-sub">Нажмите «Включить редактирование», затем кликайте по блокам текста и вписывайте данные. Фото добавляется кнопкой «Загрузить фото».</p>
+
+  <div class="toolbar" style="margin-top:0;">
+    <label title="Загрузить фото пропавшего">Загрузить фото</label>
+    <input type="file" id="photoInput" accept="image/*">
+    <button type="button" id="editBtn" class="ghost">Включить редактирование</button>
+    <button type="button" id="resetBtn" class="ghost">Сбросить</button>
+    <button type="button" id="printBtn">Распечатать / Сохранить PDF</button>
+  </div>
+
+  <div class="sheet">
+    <div class="banner">
+      <h1>ПРОПАЛ ЧЕЛОВЕК<span>ВНИМАНИЕ · можем помочь найти</span></h1>
+      <div class="urgent">Помощь нужна прямо сейчас</div>
+    </div>
+
+    <div class="lead">
+      <div class="who editable" contenteditable="false">Имя Фамилия</div>
+      <div class="editable" contenteditable="false" style="font-size:15px;font-weight:600;color:var(--muted);margin-top:4px;">39 лет · город</div>
+    </div>
+
+    <div class="main">
+      <div class="photo" id="photoBox">
+        <span class="ph-label">Нажмите, чтобы<br>добавить фото<br><br><b>ФОТО</b></span>
+        <img alt="Фото пропавшего" style="display:none;">
+        <input type="file" id="photoInput2" accept="image/*" title="Добавить фото">
+      </div>
+
+      <div class="col">
+        <div class="block">
+          <h3>Когда и где пропал</h3>
+          <div class="row"><label>Дата и время пропажи</label><div class="editable" contenteditable="false">01 января 2026, примерно 14:00</div></div>
+          <div class="row"><label>Место, где видели в последний раз</label><div class="editable" contenteditable="false">г. Название, район, улица</div></div>
+          <div class="row"><label>Обстоятельства</label><div class="editable" contenteditable="false">Вышел и не вернулся. Кратко опишите обстоятельства.</div></div>
+        </div>
+
+        <div class="block">
+          <h3>Приметы</h3>
+          <div class="row"><label>Рост</label><div class="editable" contenteditable="false">175 см</div></div>
+          <div class="row"><label>Телосложение</label><div class="editable" contenteditable="false">Среднего телосложения</div></div>
+          <div class="row"><label>Волосы</label><div class="editable" contenteditable="false">Русые, короткие</div></div>
+          <div class="row"><label>Глаза</label><div class="editable" contenteditable="false">Карие</div></div>
+          <div class="row"><label>Особые приметы</label><div class="editable" contenteditable="false">Шрам на левой руке</div></div>
+        </div>
+
+        <div class="block">
+          <h3>Был одет</h3>
+          <div class="editable" contenteditable="false">Синяя куртка, тёмные джинсы, чёрные кроссовки, серая шапка.</div>
+        </div>
+
+        <img src="" alt="Фото пропавшего" class="leadPhoto">
+
+        <div class="block">
+          <h3>Контакты</h3>
+          <div class="phone"><div><small>Любая информация о местонахождении</small>8 800 700 54 52</div></div>
+          <div class="phone"><div><small>Бесплатная горячая линия (круглосуточно)</small>8 800 700 54 52</div></div>
+          <div class="row" style="margin-top:10px;"><label>Дополнительный телефон</label><div class="editable" contenteditable="false">+7 (___) ___-__-__</div></div>
+          <div class="row"><label>Контакты ищущего</label><div class="editable" contenteditable="false">Имя, телефон</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p style="color:var(--muted);font-size:13px;margin-top:12px;">Если человек найден — снимите ориентировку. Не указывайте адрес проживания и данные детей без крайней необходимости.</p>
+</section>
+
+<!-- ============ GUIDE ============ -->
+<section class="page" id="page-guide">
+  <h2 class="section-title" style="margin-top:0;">Как заполнить ориентировку</h2>
+  <p class="section-sub">Пошагово о том, что важно указать и как распространить листовку.</p>
+
+  <div class="guide-step">
+    <div class="num">1</div>
+    <div><h3>Сообщите в полицию и на горячую линию</h3>
+      <p>Обратитесь с заявлением как можно раньше — ждать установленный срок не нужно. Горячая линия работает бесплатно и круглосуточно.</p></div>
+  </div>
+  <div class="guide-step">
+    <div class="num">2</div>
+    <div><h3>Соберите актуальную информацию</h3>
+      <p>Фотография лица крупным планом, точный возраст, рост и телосложение, одежда на момент пропажи, последнее известное место и время.</p></div>
+  </div>
+  <div class="guide-step">
+    <div class="num">3</div>
+    <div><h3>Заполните редактор на сайте</h3>
+      <p>Перейдите на вкладку «Ориентировка», включите редактирование и впишите данные. Добавьте фото кнопкой «Загрузить фото».</p></div>
+  </div>
+  <div class="guide-step">
+    <div class="num">4</div>
+    <div><h3>Распечатайте и распространите</h3>
+      <p>Нажмите «Распечатать / Сохранить PDF» и выберите цветную печать. Развесьте листовки в местах массового скопления людей и публикуйте в соцсетях.</p></div>
+  </div>
+
+  <h2 class="section-title">Что лучше НЕ указывать</h2>
+  <div class="split">
+    <div class="block">
+      <h4>Избегайте лишних деталей</h4>
+      <ul>
+        <li>Адрес проживания и точное место работы</li>
+        <li>Данные и фотографии несовершеннолетних без опеки</li>
+        <li>Подробности, которые могут повредить поиску</li>
+        <li>Телефоны третьих лиц без их согласия</li>
+      </ul>
+    </div>
+    <div class="block">
+      <h4>Предпочтительно</h4>
+      <ul>
+        <li>Крупное актуальное фото лица</li>
+        <li>Только описание внешности и одежды</li>
+        <li>Единый контактный телефон ищущего</li>
+        <li>Номер горячей линии для связи</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACTS ============ -->
+<section class="page" id="page-contacts">
+  <h2 class="section-title" style="margin-top:0;">Контакты и горячая линия</h2>
+  <p class="section-sub">Эти номера помогут при пропаже человека.</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="ico">☎</div>
+      <h3>Горячая линия</h3>
+      <p class="hotline" style="margin-top:8px;">8 800 700 54 52</p>
+      <p style="margin-top:8px;">Бесплатная, круглосуточная. Помощь волонтёров и инструкции.</p>
+    </div>
+    <div class="card">
+      <div class="ico">02</div>
+      <h3>Полиция</h3>
+      <p class="hotline" style="margin-top:8px;">102</p>
+      <p style="margin-top:8px;">Единый номер экстренных служб. Подайте заявление о пропаже.</p>
+    </div>
+    <div class="card">
+      <div class="ico">SOS</div>
+      <h3>Экстренная помощь</h3>
+      <p class="hotline" style="margin-top:8px;">112</p>
+      <p style="margin-top:8px;">Единый номер вызова экстренных оперативных служб.</p>
+    </div>
+  </div>
+
+  <h2 class="section-title">Вы ищете близкого человека</h2>
+  <p class="section-sub">Создайте ориентировку прямо сейчас — каждая минута имеет значение.</p>
+  <a class="hero big-btn" href="#" data-goto="generator" style="width:auto;display:inline-block;color:var(--red);background:#fff;border:1.5px solid var(--red);">Перейти к редактору</a>
+</section>
+
+<footer class="foot">
+  <b>Поиск людей</b> · Генератор ориентировки о пропаже человека<br>
+  Горячая линия: <span class="hotline" style="color:#fff;">8 800 700 54 52</span><br>
+  <span style="opacity:.6;font-size:12px;">Сайт создан как инструмент помощи и не является официальным источником.</span>
+</footer>
+
+<script>
+(function(){
+  /* NAVIGATION */
+  var pages = document.querySelectorAll('.page');
+  var navBtns = document.querySelectorAll('.nav-btn');
+  function show(pageId, push){
+    pages.forEach(function(p){ p.classList.toggle('active', p.id === 'page-' + pageId); });
+    navBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.page === pageId); });
+    window.scrollTo({top:0, behavior:'auto'});
+    if(push && history.pushState){ try{ history.pushState(null, '', '#' + pageId); }catch(e){} }
+  }
+  navBtns.forEach(function(b){
+    b.addEventListener('click', function(){ show(b.dataset.page, true); });
+  });
+  document.querySelectorAll('[data-goto]').forEach(function(a){
+    a.addEventListener('click', function(e){ e.preventDefault(); show(a.dataset.goto, true); });
+  });
+  function fromHash(){
+    var h = location.hash.replace('#','');
+    if(h && document.getElementById('page-' + h)) show(h, false);
+  }
+  window.addEventListener('hashchange', fromHash);
+  fromHash();
+
+  /* IMAGE */
+  function setPhoto(src){
+    var box = document.getElementById('photoBox');
+    var img = box.querySelector('img'); img.style.display = 'block';
+    img.src = src;
+    document.querySelector('.ph-label').style.display = 'none';
+    box.style.borderStyle = 'solid';
+    document.querySelector('.leadPhoto').src = src;
+  }
+  ['photoInput','photoInput2'].forEach(function(id){
+    document.getElementById(id).addEventListener('change', function(e){
+      var file = e.target.files && e.target.files[0];
+      if(!file) return;
+      var reader = new FileReader();
+      reader.onload = function(){ setPhoto(reader.result); };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    });
+  });
+
+  /* EDIT TOGGLE */
+  var editable = document.querySelectorAll('.editable');
+  var editing = false;
+  document.getElementById('editBtn').addEventListener('click', function(){
+    editing = !editing;
+    editable.forEach(function(el){ el.contentEditable = editing; });
+    this.textContent = editing ? 'Выключить редактирование' : 'Включить редактирование';
+  });
+
+  /* RESET */
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    if(!window.confirm('Сбросить все тексты и фото к исходному виду?')) return;
+    location.hash = '#generator';
+    location.reload();
+  });
+
+  /* PRINT */
+  document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
+})();
+</script>
+</body>
+</html>
