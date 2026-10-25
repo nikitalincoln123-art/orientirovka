@@ -14,6 +14,29 @@
     --paper:#ffffff;
     --line:#d8d3c7;
     --bg:#efeae0;
+    --bgsoft:#f7f4ec;
+    --bgblock:#fdfcf9;
+    --hover:#f1ece0;
+  }
+  html[data-theme="dark"]{
+    --ink:#e8e8e8;
+    --muted:#b0b0b0;
+    --paper:#1f1f1f;
+    --line:#3a3a3a;
+    --bg:#121212;
+    --bgsoft:#2a2a2a;
+    --bgblock:#262626;
+    --hover:#333333;
+  }
+  html[data-theme="high"]{
+    --ink:#000000;
+    --muted:#000000;
+    --paper:#ffffff;
+    --line:#000000;
+    --bg:#ffffff;
+    --bgsoft:#ffffff;
+    --bgblock:#ffffff;
+    --hover:#d0d0d0;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
@@ -73,8 +96,8 @@
     font-weight:600;font-size:14px;color:#fff;background:var(--red);transition:background .15s;
   }
   .toolbar button:hover,.toolbar label:hover{background:var(--red-dark);}
-  .toolbar .ghost{background:#fff;color:var(--red);border:1.5px solid var(--red);}
-  .toolbar .ghost:hover{background:#fdecec;}
+  .toolbar .ghost{background:var(--paper);color:var(--red);border:1.5px solid var(--red);}
+  .toolbar .ghost:hover{background:var(--hover);}
   .toolbar input[type=file]{display:none;}
 
   .sheet{background:var(--paper);border-radius:14px;box-shadow:0 6px 30px rgba(0,0,0,.15);overflow:hidden;}
@@ -88,20 +111,20 @@
   .photo{
     border:2px dashed #c9c2b2;border-radius:12px;min-height:340px;
     display:flex;align-items:center;justify-content:center;overflow:hidden;
-    background:#f7f4ec;position:relative;
+    background:var(--bgsoft);position:relative;
   }
   .photo img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;}
   .photo .ph-label{color:var(--muted);text-align:center;font-size:15px;padding:20px;}
   .photo input{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;}
   .col{display:flex;flex-direction:column;gap:18px;}
-  .block{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fdfcf9;}
+  .block{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--bgblock);}
   .block h3{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:var(--red);border-bottom:2px solid var(--red);padding-bottom:6px;margin-bottom:10px;}
   .row{margin-bottom:8px;}
   .row:last-child{margin-bottom:0;}
   .row label{display:block;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;}
   .editable{font-size:15px;line-height:1.5;border-radius:4px;}
-  .editable[contenteditable="true"]:hover{background:#f1ece0;outline:none;}
-  .editable[contenteditable="true"]:focus{outline:2px solid var(--red);outline-offset:2px;background:#fff;}
+  .editable[contenteditable="true"]:hover{background:var(--hover);outline:none;}
+  .editable[contenteditable="true"]:focus{outline:2px solid var(--red);outline-offset:2px;background:var(--paper);}
   .phone{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--red);color:var(--red);border-radius:10px;padding:12px 16px;font-weight:800;font-size:19px;letter-spacing:1px;margin-bottom:8px;}
   .phone small{font-weight:600;font-size:12px;display:block;color:var(--muted);letter-spacing:0;text-transform:uppercase;}
   .leadPhoto{max-width:160px;max-height:200px;border-radius:10px;border:2px solid var(--line);margin:0 auto;display:block;}
@@ -155,6 +178,7 @@
       <button type="button" class="nav-btn" data-page="generator">Ориентировка</button>
       <button type="button" class="nav-btn" data-page="guide">Как заполнить</button>
       <button type="button" class="nav-btn" data-page="contacts">Контакты</button>
+    <button type="button" id="themeBtn" title="Сменить тему" style="border:1.5px solid #e9e9e9;border-radius:8px;padding:8px 12px;">🌗 Тема</button>
     </nav>
   </div>
 </header>
@@ -217,8 +241,10 @@
     <button type="button" id="saveBtn">Сохранить</button>
     <button type="button" id="resetBtn" class="ghost">Сбросить</button>
     <button type="button" id="printBtn">Распечатать / Сохранить PDF</button>
+    <button type="button" id="downloadBtn">Скачать PNG</button>
   </div>
   <div id="saveMsg" style="display:none;max-width:900px;margin:-6px auto 16px;background:#e7f6e7;border:1px solid #9ccc9c;color:#2f6b2f;border-radius:8px;padding:9px 14px;font-size:14px;font-weight:600;"></div>
+  <div id="pngContainer" style="position:absolute;left:-9999px;top:0;width:900px;"></div>
 
   <div class="sheet">
     <div class="banner">
@@ -386,6 +412,26 @@
   window.addEventListener('hashchange', fromHash);
   fromHash();
 
+  /* THEME: светлая / тёмная / высококонтрастная */
+  var themes = ['light','dark','high'];
+  var themeIdx = 0;
+  (function applyTheme(){
+    var saved = null;
+    try{ saved = localStorage.getItem('orientTheme'); }catch(e){}
+    if(saved && themes.indexOf(saved) !== -1){
+      themeIdx = themes.indexOf(saved);
+    }
+    if(themeIdx > 0) document.documentElement.setAttribute('data-theme', themes[themeIdx]);
+    document.getElementById('themeBtn').textContent = ['☀ Светлая','🌙 Тёмная','🖤 Контраст'][themeIdx];
+  })();
+  document.getElementById('themeBtn').addEventListener('click', function(){
+    themeIdx = (themeIdx + 1) % themes.length;
+    if(themeIdx > 0) document.documentElement.setAttribute('data-theme', themes[themeIdx]);
+    else document.documentElement.removeAttribute('data-theme');
+    this.textContent = ['☀ Светлая','🌙 Тёмная','🖤 Контраст'][themeIdx];
+    try{ localStorage.setItem('orientTheme', themes[themeIdx]); }catch(e){}
+  });
+
   /* IMAGE */
   function setPhoto(src){
     var box = document.getElementById('photoBox');
@@ -463,6 +509,126 @@
     }
   }
   restore();
+
+  /* DOWNLOAD PNG: рисуем ориентировку на canvas вручную */
+  function val(ed){ return (ed && ed.innerText) ? ed.innerText.trim() : ''; }
+  document.getElementById('downloadBtn').addEventListener('click', function(){
+    var e = editable; // все .editable в порядке страницы
+    var who = val(e[0]) || 'Имя Фамилия';
+    var meta = val(e[1]) || '';
+    var when  = val(e[2]), place  = val(e[3]), cir = val(e[4]);
+    var heightE = val(e[5]), buildE = val(e[6]), hair = val(e[7]), eyes = val(e[8]), special = val(e[9]);
+    var clothes = val(e[10]);
+    var addPhone = val(e[11]), seeker = val(e[12]);
+
+    var W = 760, pad = 26;
+    var photoImg = null;
+    var im = document.getElementById('photoBox').querySelector('img');
+    if(im && im.src && im.style.display !== 'none') photoImg = new Image();
+
+    function drawAll(){
+      var lines = 0;
+      var cv = document.createElement('canvas');
+      cv.width = W; cv.height = 1024; // высота пересчитается
+      var ctx = cv.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,W,cv.height);
+      ctx.fillStyle = '#c4172b'; ctx.fillRect(0,0,W,76);
+      ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
+      ctx.font = 'bold 34px Arial'; ctx.fillText('ПРОПАЛ ЧЕЛОВЕК', W/2, 40);
+      ctx.font = '19px Arial'; ctx.fillText('ВНИМАНИЕ · можем помочь найти', W/2, 66);
+      var y = 110;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 24px Arial'; ctx.fillText(who, pad, y); y += 26;
+      ctx.font = '16px Arial'; ctx.fillText(meta, pad, y); y += 24;
+
+      // фото слева
+      var photoW = 210, photoH = 250;
+      if(photoImg && photoImg.src) photoImg.onload = null;
+      ctx.fillStyle = '#eeeeee'; ctx.fillRect(pad, y, photoW, photoH);
+      ctx.strokeStyle = '#c4172b'; ctx.lineWidth = 2;
+      ctx.strokeRect(pad, y, photoW, photoH);
+      if(photoImg && photoImg.complete && photoImg.naturalWidth){
+        ctx.save(); ctx.beginPath(); ctx.rect(pad, y, photoW, photoH); ctx.clip();
+        var k = Math.max(photoW/photoImg.naturalWidth, photoH/photoImg.naturalHeight);
+        var dw = photoImg.naturalWidth*k, dh = photoImg.naturalHeight*k;
+        ctx.drawImage(photoImg, pad+(photoW-dw)/2, y+(photoH-dh)/2, dw, dh);
+        ctx.restore();
+      }
+
+      var x = pad + photoW + 20;
+      var xw = W - x - pad;
+      function section(title, items){
+        y += 2;
+        ctx.fillStyle = '#c4172b'; ctx.font = 'bold 13px Arial';
+        ctx.fillText(title.toUpperCase(), pad, y); y += 4;
+        ctx.fillStyle = '#c4172b'; ctx.fillRect(pad, y, xw, 3); y += 12;
+        ctx.fillStyle = '#000000'; ctx.font = '14px Arial';
+        items.forEach(function(it){
+          if(!it) return;
+          var wrapped = wrapText(ctx, it, xw-8);
+          wrapped.forEach(function(ln){ ctx.fillText(ln, x, y); y += 18; });
+          y += 2;
+        });
+      }
+      ctx.fillStyle = '#000000'; ctx.font = '14px Arial';
+      function lineRight(t){ ctx.fillText(t, x, y); y += 20; }
+
+      // Правая колонка
+      ctx.fillStyle = '#000000'; ctx.font = '14px Arial';
+      function twoline(lab, valT){ ctx.fillText(lab + ': ', x, y); ctx.font='bold 14px Arial'; ctx.fillText(valT, x+ctx.measureText(lab+': ').width, y); ctx.font='14px Arial'; y+=20; }
+      var rightTop = y;
+      if(when) twoline('Пропал', when);
+      if(place) twoline('Где', place);
+      if(cir) twoline('Обстоятельства', cir);
+      y += 4;
+      if(heightE) twoline('Рост', heightE);
+      if(buildE) twoline('Телосложение', buildE);
+      if(hair) twoline('Волосы', hair);
+      if(eyes) twoline('Глаза', eyes);
+      if(special) twoline('Особые приметы', special);
+      y += 4;
+      if(clothes){ ctx.fillStyle='#c4172b'; ctx.font='bold 13px Arial'; ctx.fillText('БЫЛ ОДЕТ', x, y); y+=16; ctx.fillStyle='#000000'; ctx.font='14px Arial'; var cw=wrapText(ctx,clothes,xw-8); cw.forEach(function(ln){ctx.fillText(ln,x,y);y+=18;}); y+=8; }
+
+      // Контакты
+      y += 4;
+      ctx.fillStyle = '#c4172b'; ctx.font='bold 14px Arial'; ctx.fillText('КОНТАКТЫ', pad, y); y+=22;
+      ctx.fillStyle='#000000'; ctx.font='bold 18px Arial'; ctx.fillText('8 800 700 54 52', pad, y); y+=22;
+      ctx.font='12px Arial'; ctx.fillText('Любая информация о местонахождении · горячая линия', pad, y); y+=24;
+      if(addPhone){ ctx.font='14px Arial'; ctx.fillText('Доп. телефон: ' + addPhone, pad, y); y+=20; }
+      if(seeker){ ctx.fillText('Ищущий: ' + seeker, pad, y); y+=20; }
+
+      cv.height = y + 30;
+      // перерисовать с точной высотой
+      var cv2 = document.createElement('canvas'); cv2.width=W; cv2.height=y+30; var c2=cv2.getContext('2d');
+      c2.drawImage(cv, 0, 0);
+      cv2.toBlob(function(blob){
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'orientirovka.png';
+        document.body.appendChild(a); a.click();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      }, 'image/png');
+    }
+    if(photoImg){
+      photoImg.onload = drawAll;
+      photoImg.src = im.src;
+    } else {
+      drawAll();
+    }
+  });
+
+  function wrapText(ctx, text, max){
+    var words = String(text).split(' ');
+    var lines = [], cur = '';
+    words.forEach(function(w){
+      var test = cur ? cur + ' ' + w : w;
+      if(ctx.measureText(test).width > max && cur){ lines.push(cur); cur = w; }
+      else cur = test;
+    });
+    if(cur) lines.push(cur);
+    return lines;
+  }
 
   /* PRINT */
   document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
