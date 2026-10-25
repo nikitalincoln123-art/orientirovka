@@ -214,9 +214,11 @@
     <label title="Загрузить фото пропавшего">Загрузить фото</label>
     <input type="file" id="photoInput" accept="image/*">
     <button type="button" id="editBtn" class="ghost">Редактирование: ВКЛ</button>
+    <button type="button" id="saveBtn">Сохранить</button>
     <button type="button" id="resetBtn" class="ghost">Сбросить</button>
     <button type="button" id="printBtn">Распечатать / Сохранить PDF</button>
   </div>
+  <div id="saveMsg" style="display:none;max-width:900px;margin:-6px auto 16px;background:#e7f6e7;border:1px solid #9ccc9c;color:#2f6b2f;border-radius:8px;padding:9px 14px;font-size:14px;font-weight:600;"></div>
 
   <div class="sheet">
     <div class="banner">
@@ -356,6 +358,7 @@
 <footer class="foot">
   <b>Поиск людей</b> · Генератор ориентировки о пропаже человека<br>
   Горячая линия: <span class="hotline" style="color:#fff;">8 800 700 54 52</span><br>
+  Автор сайта: Никита Линкольн<br>
   <span style="opacity:.6;font-size:12px;">Сайт создан как инструмент помощи и не является официальным источником.</span>
 </footer>
 
@@ -416,9 +419,50 @@
   /* RESET */
   document.getElementById('resetBtn').addEventListener('click', function(){
     if(!window.confirm('Сбросить все тексты и фото к исходному виду?')) return;
+    try{ localStorage.removeItem('orientirovkaData'); }catch(e){}
     location.hash = '#generator';
     location.reload();
   });
+
+  /* SAVE to localStorage */
+  var saveMsg = document.getElementById('saveMsg');
+  document.getElementById('saveBtn').addEventListener('click', function(){
+    var data = { texts: [], photo: null };
+    editable.forEach(function(el, i){
+      data.texts.push({ html: el.innerHTML });
+    });
+    var img = document.getElementById('photoBox').querySelector('img');
+    if(img && img.src && img.style.display !== 'none') data.photo = img.src;
+    try{
+      localStorage.setItem('orientirovkaData', JSON.stringify(data));
+      saveMsg.textContent = 'Данные сохранены в браузере. При следующем открытии они восстановятся.';
+    }catch(e){
+      saveMsg.textContent = 'Не удалось сохранить (браузер блокирует хранилище).';
+    }
+    saveMsg.style.display = 'block';
+    setTimeout(function(){ saveMsg.style.display = 'none'; }, 4000);
+  });
+
+  /* RESTORE on load */
+  function restore(){
+    var saved = null;
+    try{ saved = JSON.parse(localStorage.getItem('orientirovkaData')); }catch(e){}
+    if(!saved || !saved.texts || !saved.texts.length) return;
+    editable.forEach(function(el, i){
+      if(saved.texts[i] && saved.texts[i].html !== undefined) el.innerHTML = saved.texts[i].html;
+      el.contentEditable = true;
+    });
+    if(saved.photo){
+      var pbox = document.getElementById('photoBox');
+      var pimg = pbox.querySelector('img');
+      pimg.style.display = 'block';
+      pimg.src = saved.photo;
+      document.querySelector('.ph-label').style.display = 'none';
+      pbox.style.borderStyle = 'solid';
+      document.querySelector('.leadPhoto').src = saved.photo;
+    }
+  }
+  restore();
 
   /* PRINT */
   document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
