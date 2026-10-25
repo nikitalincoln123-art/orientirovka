@@ -205,12 +205,12 @@
 <!-- ============ GENERATOR ============ -->
 <section class="page" id="page-generator">
   <h2 class="section-title" style="margin-top:0;">Редактор ориентировки</h2>
-  <p class="section-sub">Нажмите «Включить редактирование», затем кликайте по блокам текста и вписывайте данные. Фото добавляется кнопкой «Загрузить фото».</p>
+  <p class="section-sub">Кликайте прямо по тексту внутри листовки и вписывайте данные. Фото добавляется кнопкой «Загрузить фото». Если нужно, кнопкой «Редактирование: ВЫКЛ» можно временно отключить ввод.</p>
 
   <div class="toolbar" style="margin-top:0;">
     <label title="Загрузить фото пропавшего">Загрузить фото</label>
     <input type="file" id="photoInput" accept="image/*">
-    <button type="button" id="editBtn" class="ghost">Включить редактирование</button>
+    <button type="button" id="editBtn" class="ghost">Редактирование: ВКЛ</button>
     <button type="button" id="resetBtn" class="ghost">Сбросить</button>
     <button type="button" id="printBtn">Распечатать / Сохранить PDF</button>
   </div>
@@ -400,13 +400,14 @@
     });
   });
 
-  /* EDIT TOGGLE */
+  /* EDIT: ВСЕ поля редактируемы сразу по умолчанию */
   var editable = document.querySelectorAll('.editable');
-  var editing = false;
+  var editing = true;
+  editable.forEach(function(el){ el.contentEditable = true; });
   document.getElementById('editBtn').addEventListener('click', function(){
     editing = !editing;
     editable.forEach(function(el){ el.contentEditable = editing; });
-    this.textContent = editing ? 'Выключить редактирование' : 'Включить редактирование';
+    this.textContent = editing ? 'Редактирование: ВКЛ' : 'Редактирование: ВЫКЛ';
   });
 
   /* RESET */
