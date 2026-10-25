@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Пропал человек — генератор ориентировки</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23c4172b'/%3E%3Ccircle cx='9.5' cy='8' r='3.4' fill='%23fff'/%3E%3Cpath d='M4.5 18.5c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5' stroke='%23fff' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='16.6' cy='16.2' r='2.4' stroke='%23fff' stroke-width='1.8' fill='none'/%3E%3Cpath d='M18.6 18.3l2.2 2.2' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
   :root{
     --red:#c4172b;
@@ -29,7 +30,7 @@
   }
   .nav-inner{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:24px;padding:14px 20px;}
   .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:.5px;}
-  .brand .dot{width:16px;height:16px;background:var(--red);border-radius:50%;flex:none;}
+  .brand .logo{width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--red);border-radius:9px;}
   .nav-links{display:flex;gap:6px;margin-left:auto;}
   .nav-links button{
     font:inherit;cursor:pointer;background:transparent;color:#e9e9e9;border:none;
@@ -146,7 +147,9 @@
 
 <header class="nav">
   <div class="nav-inner">
-    <div class="brand"><span class="dot"></span><span>Поиск людей</span></div>
+    <div class="brand"><span class="logo" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="12" fill="var(--red)"/><circle cx="9.5" cy="8" r="3.4" fill="#fff"/><path d="M4.5 18.5c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="16.6" cy="16.2" r="2.4" stroke="#fff" stroke-width="1.8" fill="none"/><path d="M18.6 18.3l2.2 2.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </span><span>Поиск людей</span></div>
     <nav class="nav-links">
       <button type="button" class="nav-btn active" data-page="home">Главная</button>
       <button type="button" class="nav-btn" data-page="generator">Ориентировка</button>
